@@ -86,7 +86,24 @@ private:
 
 	static void InitJitterLookup(int MSFactor);
 	static int GetJitterLookupSize() { return JitterLookupSizePixels * sm_JitterLookupMSFactor; }
-	static const XMVECTOR& GetJitter(int x, int y)
+
+	static const XMVECTOR GetJitter(XMVECTOR xy)
+	{
+		// Arbitrary scale & bias to apply to randomise the coordinates.
+		static const XMVECTORF32 Scale = { 10.32854f, 1.2029f, 0.0f, 0.0f };
+		static const XMVECTORF32 Bias = { 12.94703f, 4.3744f, 0.0f, 0.0f };
+
+		auto x = XMVectorSplatX(xy);
+		auto y = XMVectorSplatY(xy);
+
+		// Mush the x & y together and apply scale & bias.
+		auto permuted = (x + y) * Scale * Bias;
+
+		// Take fractional portion.
+		return permuted - _mm_cvtepi32_ps(_mm_cvttps_epi32(permuted));
+	}
+
+	static const XMVECTOR& GetJitterWithT(int x, int y)
 	{
 		x = x % GetJitterLookupSize();
 		y = y % GetJitterLookupSize();

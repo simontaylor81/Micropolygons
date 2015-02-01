@@ -354,10 +354,10 @@ void cSoftwareRasterizer::RasterizeGridStandard(const cGrid& Grid)
 
 			for (INT X = Quad.XMin; X <= Quad.XMax; X++, vx += xAdd)
 			{
-				// Test sample location against edge equations.
-				const auto& Jitter = GetJitter(X, Y);
-				const auto xy = XMVectorOrInt(vx, vy) + Jitter;
+				auto xy = XMVectorOrInt(vx, vy);
+				xy += GetJitter(xy);
 
+				// Test sample location against edge equations.
 				if (IsInsideFourEquations(Quad.m_EdgeEquations, xy))
 				{
 					// Force it to use the uint64_t assignment operator
@@ -510,7 +510,7 @@ void cSoftwareRasterizer::RasterizeGridMotionBlur(const cGrid& Grid)
 				auto xyt = XMVectorSetInt(X, Y, 0, 0);
 
 				// Test sample location against edge equations.
-				const auto& Jitter = GetJitter(X, Y);
+				const auto& Jitter = GetJitterWithT(X, Y);
 				xyt += Jitter;
 
 				// Test sample location against edge equations.
