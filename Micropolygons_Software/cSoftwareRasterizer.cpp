@@ -516,6 +516,37 @@ void cSoftwareRasterizer::RasterizeGridMotionBlur(const cGrid& Grid)
 }
 
 //--------------------------------------------------------------------------------------
+// Fast implementation of pow for values between 0 and 1.
+// Taken from https://gist.github.com/Novum/1200562
+//--------------------------------------------------------------------------------------
+inline XMVECTOR FastPow01(XMVECTOR x, XMVECTOR y)
+{
+#if USE_SSE
+	static const __m128 fourOne = _mm_set1_ps(1.0f);
+	static const __m128 fourHalf = _mm_set1_ps(0.5f);
+
+	__m128 a = _mm_sub_ps(fourOne, y);
+	__m128 b = _mm_sub_ps(x, fourOne);
+	__m128 aSq = _mm_mul_ps(a, a);
+	__m128 bSq = _mm_mul_ps(b, b);
+	__m128 c = _mm_mul_ps(fourHalf, bSq);
+	__m128 d = _mm_sub_ps(b, c);
+	__m128 dSq = _mm_mul_ps(d, d);
+	__m128 e = _mm_mul_ps(aSq, dSq);
+	__m128 f = _mm_mul_ps(a, d);
+	__m128 g = _mm_mul_ps(fourHalf, e);
+	__m128 h = _mm_add_ps(fourOne, f);
+	__m128 i = _mm_add_ps(h, g);
+	__m128 iRcp = _mm_rcp_ps(i);
+	__m128 result = _mm_mul_ps(x, iRcp);
+
+	return result;
+#else
+#error TODO
+#endif
+}
+
+//--------------------------------------------------------------------------------------
 // Downsample the multi-sampled render target to the backbuffer.
 //--------------------------------------------------------------------------------------
 void cSoftwareRasterizer::DownsampleBuffer()
@@ -532,7 +563,7 @@ void cSoftwareRasterizer::DownsampleBuffer()
 			FilteredColour = XMVectorClamp(FilteredColour, XMVectorZero(), XMVectorSplatOne());
 
 			// Gamma correct (not alpha).
-			auto GammaColour = XMVectorPow(FilteredColour, XMVectorReplicate(1.0f / 2.2f));
+			auto GammaColour = FastPow01(FilteredColour, XMVectorReplicate(1.0f / 2.2f));
 			FilteredColour = XMVectorSelect(FilteredColour, GammaColour, XMVectorSelectControl(1, 1, 1, 0));
 
 			// Convert to BGRA32 format.
