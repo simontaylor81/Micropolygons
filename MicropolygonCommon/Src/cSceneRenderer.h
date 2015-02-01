@@ -1,6 +1,6 @@
 #pragma once
 
-const float DefaultMicropolygonSize = 128.0f;
+const float DefaultMicropolygonSize = 8.0f;
 
 namespace MicropolygonCommon
 {

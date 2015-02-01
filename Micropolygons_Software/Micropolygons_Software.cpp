@@ -37,7 +37,7 @@ cSceneRenderer	g_Renderer(&g_Scene);
 
 // Render parameters.
 UINT	g_SuperSampleFactor = 4;
-float	g_FilterWidth = 3.0f;
+float	g_FilterWidth = 1.0f;
 
 //--------------------------------------------------------------------------------------
 // Forward declarations
@@ -206,15 +206,15 @@ void InitScene()
 {
 	// Add a single quad to the scene (exciting eh?)
 	g_Scene.m_Quads.push_back(cQuad(
-		cQuadVertex(XMFLOAT3(-0.50f, -0.5f, 0.0f),  XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f)),
-		cQuadVertex(XMFLOAT3( 0.25f, -0.51f, 0.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f)),
-		cQuadVertex(XMFLOAT3(-0.75f,  0.75f, 0.0f), XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f)),
-		cQuadVertex(XMFLOAT3( 0.75f,  0.5f, 0.0f),  XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f))));
+		cQuadVertex(XMFLOAT3(-0.50f, -0.5f, 0.0f),  XMUSHORTN4(1.0f, 0.0f, 0.0f, 1.0f)),
+		cQuadVertex(XMFLOAT3( 0.25f, -0.51f, 0.0f), XMUSHORTN4(0.0f, 1.0f, 0.0f, 1.0f)),
+		cQuadVertex(XMFLOAT3(-0.75f,  0.75f, 0.0f), XMUSHORTN4(0.0f, 0.0f, 1.0f, 1.0f)),
+		cQuadVertex(XMFLOAT3( 0.75f,  0.5f, 0.0f),  XMUSHORTN4(1.0f, 1.0f, 0.0f, 1.0f))));
 	//g_Scene.m_Quads.push_back(cQuad(
-	//	cQuadVertex(XMFLOAT3(-0.5f, -0.5f, 0.0f),  XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f)),
-	//	cQuadVertex(XMFLOAT3( 0.5f, -0.5f, 0.0f),  XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f)),
-	//	cQuadVertex(XMFLOAT3(-0.51f,  0.5f, 0.0f), XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f)),
-	//	cQuadVertex(XMFLOAT3( 0.51f,  0.5f, 0.0f), XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f))));
+	//	cQuadVertex(XMFLOAT3(-0.5f, -0.5f, 0.0f),  XMUSHORTN4(1.0f, 0.0f, 0.0f, 1.0f)),
+	//	cQuadVertex(XMFLOAT3( 0.5f, -0.5f, 0.0f),  XMUSHORTN4(0.0f, 1.0f, 0.0f, 1.0f)),
+	//	cQuadVertex(XMFLOAT3(-0.51f,  0.5f, 0.0f), XMUSHORTN4(0.0f, 0.0f, 1.0f, 1.0f)),
+	//	cQuadVertex(XMFLOAT3( 0.51f,  0.5f, 0.0f), XMUSHORTN4(1.0f, 1.0f, 0.0f, 1.0f))));
 
 	// Set some very basic transforms.
 	XMStoreFloat4x4(&g_Scene.m_Transform, XMMatrixTranslation(0.0f, 0.0f, 0.0f));
@@ -245,11 +245,11 @@ void Render()
 
 	// Output render time.
 	wchar_t Buffer[256];
-	swprintf(Buffer, 1024, L"Render took %.1f seconds.\n", RenderTime);
+	swprintf(Buffer, 1024, L"Render took %.3f seconds.\n", RenderTime);
 	OutputDebugString(Buffer);
 
 	// Splat the buffer to the screen.
-	const BITMAPINFO bmi = {{sizeof(BITMAPINFOHEADER),g_Width,-(INT)g_Height,1,32,BI_RGB,0,0,0,0,0},{0,0,0,0}};
+	const BITMAPINFO bmi = {{sizeof(BITMAPINFOHEADER),(LONG)g_Width,-(LONG)g_Height,1,32,BI_RGB,0,0,0,0,0},{0,0,0,0}};
 	StretchDIBits(hdc, 0, 0, g_Width, g_Height, 0, 0, g_Width, g_Height, &g_Buffer[0], &bmi, DIB_RGB_COLORS, SRCCOPY);
 
 	// Draw the HUD.

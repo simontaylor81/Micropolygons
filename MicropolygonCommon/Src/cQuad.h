@@ -12,17 +12,17 @@ class cQuadVertex
 {
 public:
 	XMFLOAT3 pos;
-	XMFLOAT4 colour;
+	XMUSHORTN4 colour;
 
 	cQuadVertex() {}
-	cQuadVertex(const XMFLOAT3& InPos, const XMFLOAT4& InColour)
+	cQuadVertex(const XMFLOAT3& InPos, const XMUSHORTN4& InColour)
 		: pos(InPos)
 		, colour(InColour)
 	{}
 	cQuadVertex(const XMVECTOR& InPos, const XMVECTOR& InColour)
 	{
 		XMStoreFloat3(&pos, InPos);
-		XMStoreFloat4(&colour, InColour);
+		XMStoreUShortN4(&colour, InColour);
 	}
 
 	XMVECTOR GetPos() const
@@ -31,7 +31,7 @@ public:
 	}
 	XMVECTOR GetColour() const
 	{
-		return XMLoadFloat4(&colour);
+		return XMLoadUShortN4(&colour);
 	}
 
 	// A couple of operators to allow Lerp to work.

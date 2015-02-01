@@ -83,7 +83,7 @@ class cIntermediateQuadNoBlur
 public:
 
 	cFourEquations	m_EdgeEquations;
-	XMVECTOR		m_Colour;					// Single colour (no Gouraud)
+	XMUSHORTN4		m_Colour;					// Single colour (no Gouraud)
 	INT				XMin, XMax, YMin, YMax;		// Conservative extents of the screen-space AABB.
 };
 
@@ -95,7 +95,7 @@ class cIntermediateQuadMotionBlur
 public:
 
 	cFourEquations	m_EdgeEquations[2];			// t0 and t1
-	XMVECTOR		m_Colour;					// Single colour (no Gouraud)
+	XMUSHORTN4		m_Colour;					// Single colour (no Gouraud)
 	INT				XMin, XMax, YMin, YMax;		// Conservative extents of the screen-space AABB.
 };
 
@@ -237,7 +237,7 @@ bool IsInsideFourTimeDependentEqns(const cFourEquations& Eqns_t0, const cFourEqu
 
 // Static members.
 XMFLOAT3*	cSoftwareRasterizer::sm_JitterLookup = NULL;
-int				cSoftwareRasterizer::sm_JitterLookupMSFactor = 0;
+int			cSoftwareRasterizer::sm_JitterLookupMSFactor = 0;
 
 inline bool MatrixEqual(const XMMATRIX& a, const FXMMATRIX& b)
 {
@@ -262,7 +262,7 @@ void cSoftwareRasterizer::RasterizeGrid(const cGrid& Grid)
 	ZeroMemory(m_MSBuffer, m_Width * m_Height * m_MSFactor * m_MSFactor * sizeof(*m_MSBuffer));
 
 	// Decide between the two rasterization methods.
-	static BOOL bMotionBlur = !MatrixEqual(Grid.GetTransform(), Grid.GetPrevTransform());
+	const bool bMotionBlur = !MatrixEqual(Grid.GetTransform(), Grid.GetPrevTransform());
 	if (!bMotionBlur)
 		RasterizeGridStandard(Grid);
 	else
@@ -331,7 +331,7 @@ void cSoftwareRasterizer::RasterizeGridStandard(const cGrid& Grid)
 			OutQuad.YMax = Min(OutQuad.YMax, (INT) m_Height * m_MSFactor - 1);
 
 			// Copy colour of first vert.
-			OutQuad.m_Colour = Grid.GetVert(x, y).GetColour();
+			OutQuad.m_Colour = Grid.GetVert(x, y).colour;
 
 			// Compute edge equations.
 			OutQuad.m_EdgeEquations.Set(PixelPositions);
@@ -475,7 +475,7 @@ void cSoftwareRasterizer::RasterizeGridMotionBlur(const cGrid& Grid)
 					OutQuad.YMax = Min(OutQuad.YMax, (INT) m_Height * m_MSFactor - 1);
 
 					// Copy colour of first vert.
-					OutQuad.m_Colour = Grid.GetVert(x, y).GetColour();
+					OutQuad.m_Colour = Grid.GetVert(x, y).colour;
 
 					// Copy edge equations.
 					for (int i = 0; i < 2; i++)
@@ -532,8 +532,8 @@ void cSoftwareRasterizer::DownsampleBuffer()
 			FilteredColour = XMVectorClamp(FilteredColour, XMVectorZero(), XMVectorSplatOne());
 
 			// Gamma correct (not alpha).
-			auto GammaColour = XMVectorPow(FilteredColour, XMVectorReplicate(1.0f / 2.2f));
-			FilteredColour = XMVectorSelect(FilteredColour, GammaColour, XMVectorSelectControl(1, 1, 1, 0));
+			//auto GammaColour = XMVectorPow(FilteredColour, XMVectorReplicate(1.0f / 2.2f));
+			//FilteredColour = XMVectorSelect(FilteredColour, GammaColour, XMVectorSelectControl(1, 1, 1, 0));
 
 			// Convert to BGRA32 format.
 			FilteredColour *= XMVectorReplicate(255.f);
@@ -569,7 +569,7 @@ XMVECTOR cSoftwareRasterizer::FilterPixel(int x, int y)
 		for (int sx = xMin; sx < xMax; sx++)
 		{
 			const tRenderTargetFormat& Sample = m_MSBuffer[sy * m_Width * m_MSFactor + sx];
-			AverageColour += XMVECTOR(Sample);
+			AverageColour += XMLoadUShortN4(&Sample);
 			SampleCount += 1.0f;
 		}
 	}

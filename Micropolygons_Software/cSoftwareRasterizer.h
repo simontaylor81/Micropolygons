@@ -76,7 +76,7 @@ private:
 	DWORD*	m_TargetPixels;
 
 	// The super-sampled buffer.
-	typedef XMVECTOR tRenderTargetFormat;
+	typedef XMUSHORTN4 tRenderTargetFormat;
 	tRenderTargetFormat*	m_MSBuffer;
 
 	// Jitter lookup buffer to ensure sampling locations are coherent temporaly.
