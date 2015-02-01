@@ -532,8 +532,8 @@ void cSoftwareRasterizer::DownsampleBuffer()
 			FilteredColour = XMVectorClamp(FilteredColour, XMVectorZero(), XMVectorSplatOne());
 
 			// Gamma correct (not alpha).
-			//auto GammaColour = XMVectorPow(FilteredColour, XMVectorReplicate(1.0f / 2.2f));
-			//FilteredColour = XMVectorSelect(FilteredColour, GammaColour, XMVectorSelectControl(1, 1, 1, 0));
+			auto GammaColour = XMVectorPow(FilteredColour, XMVectorReplicate(1.0f / 2.2f));
+			FilteredColour = XMVectorSelect(FilteredColour, GammaColour, XMVectorSelectControl(1, 1, 1, 0));
 
 			// Convert to BGRA32 format.
 			FilteredColour *= XMVectorReplicate(255.f);
