@@ -333,6 +333,8 @@ void cSoftwareRasterizer::RasterizeGridStandard(const cGrid& Grid)
 		}
 	}
 
+	const int bufferStride = m_Width * m_MSFactor;
+
 	// Rasterize each uPoly.
 	for (INT nPoly = 0; nPoly < NumIntQuads; nPoly++)
 	{
@@ -343,9 +345,12 @@ void cSoftwareRasterizer::RasterizeGridStandard(const cGrid& Grid)
 		XMVECTOR xAdd = XMVectorSetX(XMVectorZero(), 1.0f);
 		XMVECTOR yAdd = XMVectorSetY(XMVectorZero(), 1.0f);
 
+		auto* destBase = m_MSBuffer + Quad.YMin * bufferStride + Quad.XMin;
+
 		for (INT Y = Quad.YMin; Y <= Quad.YMax; Y++, vy += yAdd)
 		{
 			auto vx = vxMin;
+			auto* dest = destBase;
 
 			for (INT X = Quad.XMin; X <= Quad.XMax; X++, vx += xAdd)
 			{
@@ -355,9 +360,15 @@ void cSoftwareRasterizer::RasterizeGridStandard(const cGrid& Grid)
 
 				if (IsInsideFourEquations(Quad.m_EdgeEquations, xy))
 				{
-					m_MSBuffer[Y * m_Width * m_MSFactor + X] = Quad.m_Colour;
+					// Force it to use the uint64_t assignment operator
+					// to avoid copying component-wise.
+					*dest = Quad.m_Colour.v;
 				}
+
+				dest++;
 			}
+
+			destBase += bufferStride;
 		}
 	}
 
