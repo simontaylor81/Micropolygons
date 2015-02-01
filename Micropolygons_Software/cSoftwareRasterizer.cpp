@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "cSoftwareRasterizer.h"
 #include "cGrid.h"
+#include "Utility.h"
 
 #define USE_SSE 1
 
@@ -147,41 +148,36 @@ float* GetPrototype(int MSFactor)
 
 #if USE_SSE
 
-bool IsInsideFourEqns_SSE(const __m128& a, const __m128& b, const __m128& c, const __m128& x, const __m128& y)
+bool IsInsideFourEqns_SSE(FXMVECTOR a, FXMVECTOR b, FXMVECTOR c, FXMVECTOR xy)
 {
+	auto x = XMVectorSplatX(xy);
+	auto y = XMVectorSplatY(xy);
+
 	// Compute LHS of inequality.
-	__m128 lhs = _mm_add_ps(
-		_mm_mul_ps(a, x),
-		_mm_mul_ps(b, y));
+	XMVECTOR lhs = a * x + b * y;
 
 	// Compare LHS & RHS.
-	__m128 Comparison = _mm_cmplt_ps(lhs, c);
+	XMVECTOR Comparison = XMVectorLess(lhs, c);
 
 	// Extract result.
 	int Mask = _mm_movemask_ps(Comparison);
 	return !Mask;
 }
 
-__m128 LerpSSE(FXMVECTOR X, FXMVECTOR Y, const __m128& alpha)
+XMVECTOR LerpSSE(FXMVECTOR X, FXMVECTOR Y, FXMVECTOR alpha)
 {
-	// Result = X + alpha * (Y - X)
-
-	return _mm_add_ps(X, _mm_mul_ps(alpha, _mm_sub_ps(Y, X)));
+	return X + alpha * (Y - X);
 }
 
 #endif
 
-bool IsInsideFourEquations(const cFourEquations& Eqns, float X, float Y)
+bool IsInsideFourEquations(const cFourEquations& Eqns, FXMVECTOR XY)
 {
 // IsInside <=> A*x + B*y > C;
 
 #if USE_SSE
 
-	// Load coordinates into registers.
-	__m128 x = _mm_set1_ps(X);
-	__m128 y = _mm_set1_ps(Y);
-
-	return IsInsideFourEqns_SSE(Eqns.As, Eqns.Bs, Eqns.Cs, x, y);
+	return IsInsideFourEqns_SSE(Eqns.As, Eqns.Bs, Eqns.Cs, XY);
 
 #else
 	for (int i = 0; i < 4; i++)
@@ -196,23 +192,19 @@ bool IsInsideFourEquations(const cFourEquations& Eqns, float X, float Y)
 #endif
 }
 
-bool IsInsideFourTimeDependentEqns(const cFourEquations& Eqns_t0, const cFourEquations& Eqns_t1, float X, float Y, float T)
+bool IsInsideFourTimeDependentEqns(const cFourEquations& Eqns_t0, const cFourEquations& Eqns_t1, FXMVECTOR XYT)
 {
 #if USE_SSE
 
 	// Lerp the two equation sets.
-	__m128 t = _mm_set1_ps(T);
+	__m128 t = XMVectorSplatZ(XYT);
 
 	__m128 a = LerpSSE(Eqns_t0.As, Eqns_t1.As, t);
 	__m128 b = LerpSSE(Eqns_t0.Bs, Eqns_t1.Bs, t);
 	__m128 c = LerpSSE(Eqns_t0.Cs, Eqns_t1.Cs, t);
 
-	// Load coordinates into registers
-	__m128 x = _mm_set1_ps(X);
-	__m128 y = _mm_set1_ps(Y);
-
 	// Compute the inequality.
-	return IsInsideFourEqns_SSE(a, b, c, x, y);
+	return IsInsideFourEqns_SSE(a, b, c, XYT);
 
 #else
 	for (int i = 0; i < 4; i++)
@@ -236,7 +228,7 @@ bool IsInsideFourTimeDependentEqns(const cFourEquations& Eqns_t0, const cFourEqu
 }
 
 // Static members.
-XMFLOAT3*	cSoftwareRasterizer::sm_JitterLookup = NULL;
+XMVECTOR*	cSoftwareRasterizer::sm_JitterLookup = NULL;
 int			cSoftwareRasterizer::sm_JitterLookupMSFactor = 0;
 
 inline bool MatrixEqual(const XMMATRIX& a, const FXMMATRIX& b)
@@ -277,7 +269,7 @@ void cSoftwareRasterizer::RasterizeGrid(const cGrid& Grid)
 void cSoftwareRasterizer::RasterizeGridStandard(const cGrid& Grid)
 {
 	// Compute screen-space AABB and edge equations for each uPoly.
-	cIntermediateQuadNoBlur* IntQuads = (cIntermediateQuadNoBlur*) _aligned_malloc(sizeof(cIntermediateQuadNoBlur) * Grid.GetNumPolysX() * Grid.GetNumPolysY(), __alignof(cIntermediateQuadNoBlur));
+	auto* IntQuads = AlignedAlloc<cIntermediateQuadNoBlur>(Grid.GetNumPolysX() * Grid.GetNumPolysY());
 	INT NumIntQuads = 0;
 
 	// Bust each uPoly in the grid.
@@ -346,16 +338,22 @@ void cSoftwareRasterizer::RasterizeGridStandard(const cGrid& Grid)
 	{
 		const cIntermediateQuadNoBlur& Quad = IntQuads[nPoly];
 
-		for (INT Y = Quad.YMin; Y <= Quad.YMax; Y++)
+		XMVECTOR vxMin = XMConvertVectorIntToFloat(XMVectorSetInt(Quad.XMin, 0, 0, 0), 0);
+		XMVECTOR vy = XMConvertVectorIntToFloat(XMVectorSetInt(0, Quad.YMin, 0, 0), 0);
+		XMVECTOR xAdd = XMVectorSetX(XMVectorZero(), 1.0f);
+		XMVECTOR yAdd = XMVectorSetY(XMVectorZero(), 1.0f);
+
+		for (INT Y = Quad.YMin; Y <= Quad.YMax; Y++, vy += yAdd)
 		{
-			for (INT X = Quad.XMin; X <= Quad.XMax; X++)
+			auto vx = vxMin;
+
+			for (INT X = Quad.XMin; X <= Quad.XMax; X++, vx += xAdd)
 			{
 				// Test sample location against edge equations.
-				const XMFLOAT3& Jitter = GetJitter(X, Y);
-				const float x = X + Jitter.x;
-				const float y = Y + Jitter.y;
+				const auto& Jitter = GetJitter(X, Y);
+				const auto xy = XMVectorOrInt(vx, vy) + Jitter;
 
-				if (IsInsideFourEquations(Quad.m_EdgeEquations, x, y))
+				if (IsInsideFourEquations(Quad.m_EdgeEquations, xy))
 				{
 					m_MSBuffer[Y * m_Width * m_MSFactor + X] = Quad.m_Colour;
 				}
@@ -363,7 +361,7 @@ void cSoftwareRasterizer::RasterizeGridStandard(const cGrid& Grid)
 		}
 	}
 
-	_aligned_free(IntQuads);
+	AlignedFree(IntQuads);
 }
 
 //--------------------------------------------------------------------------------------
@@ -372,8 +370,8 @@ void cSoftwareRasterizer::RasterizeGridStandard(const cGrid& Grid)
 void cSoftwareRasterizer::RasterizeGridMotionBlur(const cGrid& Grid)
 {
 	// Compute screen-space AABB and edge equations for each uPoly.
-	cIntermediateQuadMotionBlur* IntQuads = (cIntermediateQuadMotionBlur*) _aligned_malloc(sizeof(cIntermediateQuadMotionBlur) *
-		Grid.GetNumPolysX() * Grid.GetNumPolysY() * m_MSFactor * m_MSFactor, __alignof(cIntermediateQuadMotionBlur));
+	auto* IntQuads = AlignedAlloc<cIntermediateQuadMotionBlur>(
+		Grid.GetNumPolysX() * Grid.GetNumPolysY() * m_MSFactor * m_MSFactor);
 	INT NumIntQuads = 0;
 
 	// Bust each uPoly in the grid.
@@ -498,13 +496,14 @@ void cSoftwareRasterizer::RasterizeGridMotionBlur(const cGrid& Grid)
 		{
 			for (INT X = Quad.XMin; X <= Quad.XMax; X += m_MSFactor)
 			{
-				// Test sample location against edge equations.
-				const XMFLOAT3& Jitter = GetJitter(X, Y);
-				const float x = X + Jitter.x;
-				const float y = Y + Jitter.y;
-				const float t = Jitter.z;
+				auto xyt = XMVectorSetInt(X, Y, 0, 0);
 
-				if (IsInsideFourTimeDependentEqns(Quad.m_EdgeEquations[0], Quad.m_EdgeEquations[1], x, y, t))
+				// Test sample location against edge equations.
+				const auto& Jitter = GetJitter(X, Y);
+				xyt += Jitter;
+
+				// Test sample location against edge equations.
+				if (IsInsideFourTimeDependentEqns(Quad.m_EdgeEquations[0], Quad.m_EdgeEquations[1], xyt))
 				{
 					m_MSBuffer[Y * m_Width * m_MSFactor + X] = Quad.m_Colour;
 				}
@@ -512,7 +511,7 @@ void cSoftwareRasterizer::RasterizeGridMotionBlur(const cGrid& Grid)
 		}
 	}
 
-	_aligned_free(IntQuads);
+	AlignedFree(IntQuads);
 }
 
 //--------------------------------------------------------------------------------------
@@ -619,11 +618,11 @@ void cSoftwareRasterizer::InitJitterLookup(int MSFactor)
 	sm_JitterLookupMSFactor = MSFactor;
 
 	// Free previous data, if present.
-	delete sm_JitterLookup;
+	AlignedFree(sm_JitterLookup);
 
 	// Allocate new table.
 	const int TableSize = GetJitterLookupSize() * GetJitterLookupSize();
-	sm_JitterLookup = new XMFLOAT3[TableSize];
+	sm_JitterLookup = AlignedAlloc<XMVECTOR>(TableSize);
 
 	// Seed the random number generator.
 	srand(0);
@@ -631,10 +630,10 @@ void cSoftwareRasterizer::InitJitterLookup(int MSFactor)
 	// Compute spatial jitter values -- simple random values that are added to the sample point.
 	for (int i = 0; i < TableSize; i++)
 	{
-		sm_JitterLookup[i] = XMFLOAT3(
+		sm_JitterLookup[i] = XMVectorSet(
 			(float) rand() / (float) RAND_MAX,
 			(float) rand() / (float) RAND_MAX,
-			0.0f);
+			0.0f, 0.0f);
 	}
 
 	float* Prototype = GetPrototype(MSFactor);
@@ -650,7 +649,8 @@ void cSoftwareRasterizer::InitJitterLookup(int MSFactor)
 				{
 					const float t = Prototype[sy * MSFactor + sx] +
 						((float) rand() / (float) RAND_MAX) / (float) (MSFactor * MSFactor);
-					sm_JitterLookup[(y + sy) * GetJitterLookupSize() + x + sx].z = t;
+					auto& dest = sm_JitterLookup[(y + sy) * GetJitterLookupSize() + x + sx];
+					dest = XMVectorSetZ(dest, t);
 				}
 			}
 		}

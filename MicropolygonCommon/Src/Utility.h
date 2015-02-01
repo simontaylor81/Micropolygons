@@ -34,4 +34,18 @@ private:
 	double	m_PerfCounterPeriod;
 };
 
+//--------------------------------------------------------------------------------------
+// Aligned allocation helpers.
+//--------------------------------------------------------------------------------------
+template <typename T>
+inline T* AlignedAlloc(size_t count)
+{
+	return static_cast<T*>(_aligned_malloc(count * sizeof(T), alignof(T)));
+}
+
+inline void AlignedFree(void* ptr)
+{
+	_aligned_free(ptr);
+}
+
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "iRasterizer.h"
+#include "Utility.h"
 
 class cSoftwareRasterizer : public MicropolygonCommon::iRasterizer
 {
@@ -15,13 +16,12 @@ public:
 		, m_TargetPixels(TargetPixels)
 	{
 		// Allocate super-sampled render target.
-		m_MSBuffer = static_cast<tRenderTargetFormat*>(
-			_aligned_malloc(sizeof(tRenderTargetFormat) * Width * Height * MSFactor * MSFactor, 16));
+		m_MSBuffer = MicropolygonCommon::AlignedAlloc<tRenderTargetFormat>(Width * Height * MSFactor * MSFactor);
 	}
 
 	~cSoftwareRasterizer()
 	{
-		_aligned_free(m_MSBuffer);
+		MicropolygonCommon::AlignedFree(m_MSBuffer);
 	}
 
 	// Rasterize a set of micropolygons using the CPU.
@@ -81,12 +81,12 @@ private:
 
 	// Jitter lookup buffer to ensure sampling locations are coherent temporaly.
 	enum { JitterLookupSizePixels = 32 };
-	static XMFLOAT3*	sm_JitterLookup;
+	static XMVECTOR*	sm_JitterLookup;
 	static int			sm_JitterLookupMSFactor;
 
 	static void InitJitterLookup(int MSFactor);
 	static int GetJitterLookupSize() { return JitterLookupSizePixels * sm_JitterLookupMSFactor; }
-	static const XMFLOAT3& GetJitter(int x, int y)
+	static const XMVECTOR& GetJitter(int x, int y)
 	{
 		x = x % GetJitterLookupSize();
 		y = y % GetJitterLookupSize();
