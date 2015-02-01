@@ -1,0 +1,43 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Boilerplate">
+      <UniqueIdentifier>{448d4e8c-584f-4ab4-977e-52a18eb542e8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Boilerplate\Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Src\Resource.h">
+      <Filter>Boilerplate</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\stdafx.h">
+      <Filter>Boilerplate</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\cD3D10Rasterizer.h" />
+    <ClInclude Include="Src\Globals.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Src\stdafx.cpp">
+      <Filter>Boilerplate</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\cD3D10Rasterizer.cpp" />
+    <ClCompile Include="Src\Micropolygons_D3D10.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Micropolygons_D3D10.ico">
+      <Filter>Boilerplate\Resource Files</Filter>
+    </None>
+    <None Include="small.ico">
+      <Filter>Boilerplate\Resource Files</Filter>
+    </None>
+    <None Include="Rasterize.fx" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Micropolygons_D3D10.rc">
+      <Filter>Boilerplate\Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,32 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Micropolygons_Software", "Micropolygons_Software\Micropolygons_Software.vcxproj", "{D3D10000-96D0-4629-88B8-122C0256058C}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MicropolygonCommon", "MicropolygonCommon\MicropolygonCommon.vcxproj", "{58880A3D-FAB2-4ABB-8879-33CC5EF351C3}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Micropolygons_D3D10", "Micropolygons_D3D10\Micropolygons_D3D10.vcxproj", "{0EE6DFD3-1B32-4859-B2F7-522A6193C9DF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D3D10000-96D0-4629-88B8-122C0256058C}.Debug|Win32.ActiveCfg = Debug|Win32
+		{D3D10000-96D0-4629-88B8-122C0256058C}.Debug|Win32.Build.0 = Debug|Win32
+		{D3D10000-96D0-4629-88B8-122C0256058C}.Release|Win32.ActiveCfg = Release|Win32
+		{D3D10000-96D0-4629-88B8-122C0256058C}.Release|Win32.Build.0 = Release|Win32
+		{58880A3D-FAB2-4ABB-8879-33CC5EF351C3}.Debug|Win32.ActiveCfg = Debug|Win32
+		{58880A3D-FAB2-4ABB-8879-33CC5EF351C3}.Debug|Win32.Build.0 = Debug|Win32
+		{58880A3D-FAB2-4ABB-8879-33CC5EF351C3}.Release|Win32.ActiveCfg = Release|Win32
+		{58880A3D-FAB2-4ABB-8879-33CC5EF351C3}.Release|Win32.Build.0 = Release|Win32
+		{0EE6DFD3-1B32-4859-B2F7-522A6193C9DF}.Debug|Win32.ActiveCfg = Debug|Win32
+		{0EE6DFD3-1B32-4859-B2F7-522A6193C9DF}.Debug|Win32.Build.0 = Debug|Win32
+		{0EE6DFD3-1B32-4859-B2F7-522A6193C9DF}.Release|Win32.ActiveCfg = Release|Win32
+		{0EE6DFD3-1B32-4859-B2F7-522A6193C9DF}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
