@@ -40,7 +40,7 @@ private:
 template <typename T>
 inline T* AlignedAlloc(size_t count)
 {
-	return static_cast<T*>(_aligned_malloc(count * sizeof(T), alignof(T)));
+	return static_cast<T*>(_aligned_malloc(count * sizeof(T), __alignof(T)));
 }
 
 inline void AlignedFree(void* ptr)
